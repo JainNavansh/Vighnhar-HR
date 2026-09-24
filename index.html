@@ -360,7 +360,45 @@ function petals(n=110){
 }
 
 /* ---------- HR anthem: a tiny synthesized jingle ---------- */
-function playJingle(){
+/* Plays the one audio clip in the sounds/ folder next to index.html, if there is one */
+const AUDIO_RE=/\.(mp3|m4a|aac|wav|ogg|oga|opus|webm)$/i;
+let CLIP;
+async function findClip(){
+  if(CLIP!==undefined) return CLIP;
+  CLIP=null;
+  try{
+    // On GitHub Pages (username.github.io/repo/), ask GitHub what is inside sounds/
+    const h=location.hostname;
+    if(h.endsWith('.github.io')){
+      const owner=h.split('.')[0], parts=location.pathname.split('/').filter(Boolean);
+      const repo=(parts[0]&&!parts[0].includes('.'))?parts[0]:h;
+      const r=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/sounds`);
+      if(r.ok){const f=(await r.json()).find(x=>x.type==='file'&&AUDIO_RE.test(x.name));if(f){CLIP='sounds/'+encodeURIComponent(f.name);return CLIP;}}
+    }
+  }catch(e){}
+  // Anywhere else: try a few common names
+  for(const n of ['anthem','jingle','song','clip','audio','sound','music']) for(const ext of ['mp3','m4a','wav','ogg']){
+    try{const r=await fetch(`sounds/${n}.${ext}`,{method:'HEAD'});if(r.ok){CLIP=`sounds/${n}.${ext}`;return CLIP;}}catch(e){}
+  }
+  return CLIP;
+}
+async function playJingle(){
+  const btn=$('#playJ'); if(!btn||btn.disabled)return;
+  btn.disabled=true; btn.textContent='♪ Loading…';
+  const url=await findClip();
+  if(!url){btn.disabled=false;return synthJingle();}
+  const els=[...document.querySelectorAll('#lyr p')], a=new Audio(url);
+  let step=null;
+  const end=()=>{clearInterval(step);els.forEach(e=>e.classList.remove('on'));btn.disabled=false;btn.textContent='▶ Play again';petals(50);quest('anthem');};
+  a.onended=end;
+  a.onerror=()=>{clearInterval(step);btn.disabled=false;synthJingle();};
+  a.onplaying=()=>{btn.classList.remove('pulse');btn.textContent='■ Stop';btn.disabled=false;
+    btn.onclick=()=>{a.pause();btn.onclick=playJingle;end();};
+    step=setInterval(()=>{const d=a.duration||10,i=Math.min(els.length-1,Math.floor(a.currentTime/d*els.length));els.forEach((e,k)=>e.classList.toggle('on',k===i));},200);};
+  a.addEventListener('ended',()=>{btn.onclick=playJingle;});
+  try{await a.play();}catch(e){btn.disabled=false;synthJingle();}
+}
+function synthJingle(){
   const btn=$('#playJ'); if(!btn||btn.disabled)return;
   if(MUTED){toast('Sound is muted','Tap 🔊 at the bottom right to hear the anthem.');}
   btn.disabled=true; btn.classList.remove('pulse'); btn.textContent='♪ Playing';
