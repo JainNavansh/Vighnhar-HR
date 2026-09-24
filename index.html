@@ -261,6 +261,13 @@ input[type=range]{accent-color:var(--marigold);width:100%}
 .tdot{position:absolute;top:2px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:var(--sindoor)}
 .flash{animation:flash 1.2s ease-out 2}
 @keyframes flash{50%{box-shadow:0 0 0 4px var(--marigold)}}
+/* jingle */
+.anthem{background:var(--card);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.anthem .top{display:flex;align-items:center;gap:10px}
+.anthem h3{margin:0;font-size:16px;font-weight:600;flex:1}
+.lyr{display:flex;flex-direction:column;gap:2px}
+.lyr p{margin:0;font-size:14px;color:var(--ink-3);transition:color .2s,transform .2s}
+.lyr p.on{color:#FFD27A;font-weight:600;transform:translateX(4px)}
 /* tour */
 .tour{position:fixed;inset:0;z-index:95;background:rgba(10,4,3,.92);display:grid;place-items:center;padding:16px}
 .tcard{width:min(400px,100%);background:linear-gradient(160deg,#3A1A0A,#1F1F1F);border:1px solid #5a3414;border-radius:22px;padding:28px 22px 20px;text-align:center}
@@ -352,6 +359,24 @@ function petals(n=110){
     if(alive&&t-t0<7000)requestAnimationFrame(f);else ctx.clearRect(0,0,W,H);})(t0);
 }
 
+/* ---------- HR anthem: a tiny synthesized jingle ---------- */
+function playJingle(){
+  const btn=$('#playJ'); if(!btn||btn.disabled)return;
+  if(MUTED){toast('Sound is muted','Tap 🔊 at the bottom right to hear the anthem.');}
+  btn.disabled=true; btn.classList.remove('pulse'); btn.textContent='♪ Playing';
+  const N={C:523.25,D:587.33,E:659.25,F:698.46,G:783.99,A:880,B:987.77,c:1046.5,d:1174.66};
+  const lines=[ 'E E G G A G E', 'D D E G E D C', 'E G A c A G E', 'D E G A G E G', 'c A G c' ];
+  const beat=.28; let t=0; const els=[...document.querySelectorAll('#lyr p')];
+  lines.forEach((ln,i)=>{
+    const start=t;
+    later(()=>{els.forEach(e=>e.classList.remove('on'));els[i]&&els[i].classList.add('on');},start*1000);
+    ln.split(' ').forEach((n,k,arr)=>{const d=(k===arr.length-1)?beat*2:beat;tone(N[n],d*.9,'triangle',.07,t);if(k%2===0)tone(N[n]/2,d*.9,'sine',.03,t);t+=d;});
+    t+=beat*.5;
+  });
+  tone(1320,1.2,'sine',.05,t);tone(1980,.8,'sine',.02,t);
+  later(()=>{els.forEach(e=>e.classList.remove('on'));btn.disabled=false;btn.textContent='▶ Play again';petals(50);quest('anthem');},(t+1)*1000);
+}
+
 /* ---------- festive quests ---------- */
 const QUESTS=[
   ['vote','🗳️','Vote for Saturday','Watch HR "correct" it',()=>tab('engage')],
@@ -361,6 +386,7 @@ const QUESTS=[
   ['modak','🥟','Claim your modak money','Guess how much you get',()=>push('modak')],
   ['griev','📝','Raise a grievance','HR will improve it',()=>push('griev')],
   ['pass','🔐','Set a pandal passcode','Follow all the rules',()=>push('profile')],
+  ['anthem','🎵','Sing the HR Anthem','Praise, set to music',()=>{const e=$('#anthem');if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('flash');}}],
   ['logout','🌊','Try to log out','Visarjan is harder than it looks',()=>{tab('more');later(()=>$('#logout')&&$('#logout').click(),350);}]
 ];
 let QD={};try{QD=JSON.parse(localStorage.getItem('vhr-q')||'{}');}catch(e){}
@@ -447,6 +473,17 @@ V.home=()=>{
     <div class="cd" id="cd"></div>
     <div class="rsvp"><button class="btn btn-gold" id="yesBtn">I'll be there</button><button class="btn pulse" id="noBtn">No</button></div>
     <div class="tryme">👆 Try tapping No</div>
+  </section>
+
+  <section class="anthem" id="anthem">
+    <div class="top"><h3>🎵 The HR Anthem</h3><button class="btn btn-gold pulse" id="playJ">▶ Play</button></div>
+    <div class="lyr" id="lyr">
+      <p>Oh HR, oh HR, you light up our day,</p>
+      <p>You read every vote, then decide anyway!</p>
+      <p>Our leaves may be zero, our modaks all gone,</p>
+      <p>But Friday is party, so the show must go on!</p>
+      <p>Ganpati Bappa Morya! 🙏</p>
+    </div>
   </section>
 
   <div><h2 class="sec-t">Workbox <small>(Your Actionable)</small></h2></div>
@@ -598,6 +635,7 @@ const B={};
 B.home=()=>{
   $('#plus').onclick=requestSheet;
   $('#help').onclick=()=>showTour(false);
+  $('#playJ').onclick=playJingle;
   document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{sfx.tap();QUESTS[+b.dataset.q][4]();});
   $('#restart').onclick=()=>{try{localStorage.removeItem('vhr-consent');localStorage.removeItem('vhr-q');localStorage.removeItem('vhr-tour');}catch(e){}location.reload();};
   $('#avatar').onclick=()=>push('profile');
@@ -877,7 +915,7 @@ function showConsent(){let seen=false;try{seen=localStorage.getItem('vhr-consent
 /* ---------- quick tour ---------- */
 const TOUR=[
   ['🪔','Welcome to VighnaHR','An HR app where everything works. Just not for you. A Ganesh Chaturthi special.'],
-  ['🎯','Complete Festive Quests','Home has 8 quests. Tap any quest to jump straight to the fun bit. Finish all 8 to become an HR Certified Survivor.'],
+  ['🎯','Complete Festive Quests','Home has 9 quests. Tap any quest to jump straight to the fun bit. Finish all 9 to become an HR Certified Survivor.'],
   ['👆','Poke everything','Buttons dodge, polls get "corrected", timers are tight. Look for the glowing buttons. Failing is half the fun, so tap Try again.'],
   ['↩️','You are never stuck','Use ← Back, ✕ or your phone’s back gesture. ↻ restarts everything and ? replays this tour. 🔊 mutes sounds.']
 ];
