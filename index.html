@@ -241,6 +241,34 @@ input[type=range]{accent-color:var(--marigold);width:100%}
 .list button:last-child{border-bottom:0}
 .list small{display:block;color:var(--ink-3);font-size:11.5px}
 
+/* quests */
+.quests{background:linear-gradient(135deg,#3A1A0A,#2A1210);border:1px solid #5a3414;border-radius:12px;padding:14px}
+.qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.qhead h2{margin:0;font-size:18px;font-weight:600}
+.qbar{height:6px;background:#4a2a14;border-radius:6px;overflow:hidden;margin-bottom:6px}
+.qbar i{display:block;height:100%;background:var(--marigold);transition:width .5s}
+.qrow{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-top:1px solid #4a2a14;padding:11px 2px;text-align:left}
+.qrow .e{font-size:22px;width:30px;text-align:center}
+.qrow b{display:block;font-size:14px;font-weight:600}
+.qrow small{display:block;color:var(--ink-3);font-size:12px}
+.qrow .go{margin-left:auto;font-size:12px;font-weight:700;color:#1d1203;background:var(--marigold);border-radius:99px;padding:4px 12px;white-space:nowrap}
+.qrow.done .go{background:#1E3A28;color:#6BE39A}
+.qrow.done b{text-decoration:line-through;opacity:.7}
+.pulse{animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(246,166,35,.7)}70%{box-shadow:0 0 0 12px rgba(246,166,35,0)}100%{box-shadow:0 0 0 0 rgba(246,166,35,0)}}
+.tryme{display:inline-block;font-size:12px;font-weight:600;color:#FFD27A;margin-top:6px}
+.tabs button{position:relative}
+.tdot{position:absolute;top:2px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:var(--sindoor)}
+.flash{animation:flash 1.2s ease-out 2}
+@keyframes flash{50%{box-shadow:0 0 0 4px var(--marigold)}}
+/* tour */
+.tour{position:fixed;inset:0;z-index:95;background:rgba(10,4,3,.92);display:grid;place-items:center;padding:16px}
+.tcard{width:min(400px,100%);background:linear-gradient(160deg,#3A1A0A,#1F1F1F);border:1px solid #5a3414;border-radius:22px;padding:28px 22px 20px;text-align:center}
+.tcard .big{font-size:64px;line-height:1}
+.tcard h2{font-family:var(--fest);font-weight:400;font-size:30px;color:var(--marigold);margin:12px 0 6px}
+.tcard p{color:var(--ink-2);margin:0 0 18px;font-size:15px;line-height:1.55}
+.tdots{display:flex;gap:6px;justify-content:center;margin-bottom:16px}
+.tdots i{width:8px;height:8px;border-radius:50%;background:#555}.tdots i.on{background:var(--marigold);width:22px;border-radius:8px}
 /* toasts, modal, petals */
 .toasts{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));width:min(408px,calc(100% - 32px));display:flex;flex-direction:column;gap:8px;z-index:70}
 .toast{background:#FFF4E0;color:#3A0E0B;border-left:4px solid var(--marigold);border-radius:10px;padding:9px 14px;font-size:13px;box-shadow:0 10px 30px -10px rgba(0,0,0,.8);animation:tin .3s}
@@ -324,6 +352,26 @@ function petals(n=110){
     if(alive&&t-t0<7000)requestAnimationFrame(f);else ctx.clearRect(0,0,W,H);})(t0);
 }
 
+/* ---------- festive quests ---------- */
+const QUESTS=[
+  ['vote','🗳️','Vote for Saturday','Watch HR "correct" it',()=>tab('engage')],
+  ['rsvp','💌','Try saying No to the party','Keep tapping No…',()=>{const e=$('#party');if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('flash');}}],
+  ['clock','⏰','Clock out','Beat the 10-second puzzle',()=>{const e=$('#clockOut');if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('flash');}}],
+  ['leave','🎯','Aim for leave','Hit the moving modak',()=>push('leaveTypes')],
+  ['modak','🥟','Claim your modak money','Guess how much you get',()=>push('modak')],
+  ['griev','📝','Raise a grievance','HR will improve it',()=>push('griev')],
+  ['pass','🔐','Set a pandal passcode','Follow all the rules',()=>push('profile')],
+  ['logout','🌊','Try to log out','Visarjan is harder than it looks',()=>{tab('more');later(()=>$('#logout')&&$('#logout').click(),350);}]
+];
+let QD={};try{QD=JSON.parse(localStorage.getItem('vhr-q')||'{}');}catch(e){}
+function quest(k){ if(QD[k])return; QD[k]=1; try{localStorage.setItem('vhr-q',JSON.stringify(QD));}catch(e){}
+  const n=Object.keys(QD).length; toast('Quest complete ✓',`${n} of ${QUESTS.length} done.`+(n===QUESTS.length?' You are an HR Certified Survivor!':''));
+  if(n===QUESTS.length){petals();notify('Certificate','HR Certified Survivor 2026. Frame it. It has no other value.');} }
+function questCard(){ const n=Object.keys(QD).length;
+  return `<section class="quests"><div class="qhead"><h2>🪔 Festive Quests</h2><span class="hint">${n}/${QUESTS.length} done</span></div>
+  <div class="qbar"><i style="width:${n/QUESTS.length*100}%"></i></div>
+  ${QUESTS.map((q,i)=>`<button class="qrow ${QD[q[0]]?'done':''}" data-q="${i}"><span class="e">${q[1]}</span><div><b>${q[2]}</b><small>${q[3]}</small></div><span class="go">${QD[q[0]]?'✓ Done':'Go ›'}</span></button>`).join('')}</section>`; }
+
 /* ---------- sheet & modal ---------- */
 function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div><button class="x" id="sx" aria-label="Close">✕</button>'+html;$('#sx').onclick=closeSheet;$('#sheet').hidden=false;$('#dim').hidden=false;}
 function closeSheet(){$('#sheet').hidden=true;$('#dim').hidden=!$('#modal').hidden?false:true;}
@@ -372,6 +420,7 @@ V.home=()=>{
   <div class="hdr">
     <div class="logo"><svg viewBox="0 0 48 48"><path d="M24 4c-4 6-14 14-14 26a14 14 0 0 0 28 0C38 18 28 10 24 4z" fill="#F6A623"/><path d="M24 8v34M17 18c1 8 3 16 7 24M31 18c-1 8-3 16-7 24" stroke="#B96A00" stroke-width="1.8" fill="none"/><circle cx="24" cy="5" r="2.6" fill="#E5484D"/></svg></div>
     <div class="sp"></div>
+    <button class="circ" id="help" aria-label="How to play" title="How to play" style="font-weight:700">?</button>
     <button class="circ" id="restart" aria-label="Restart experience" title="Restart">↻</button>
     <button class="circ" id="plus" aria-label="Raise request"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></button>
     <button class="circ" id="bell" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.4-2h-4.8a2.5 2.5 0 0 0 2.4 2zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="badge" id="bellN">${S.bell}</span></button>
@@ -379,6 +428,7 @@ V.home=()=>{
   </div>
   <div class="toran" aria-hidden="true"></div>
   <div class="greet"><small>${g}</small><h1>${EMP.name}</h1></div>
+  ${questCard()}
 
   <section class="card clock">
     <div class="date"><span id="today"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="11" r="3"/><path d="M7.5 17a5 5 0 0 1 9 0"/></svg></div>
@@ -386,15 +436,17 @@ V.home=()=>{
     <div class="prog"><i id="prog"></i></div>
     <div class="prog-l"><span>10:56 AM</span><span id="nowT"></span></div>
     <div class="shift">Shift 10:30 AM - ${shiftEnd()}${S.extra?` <span class="pill r">+${S.extra} hrs penalty</span>`:""}</div>
-    <button class="btn btn-pink btn-block" id="clockOut">Clock out</button>
+    <button class="btn btn-pink btn-block pulse" id="clockOut">Clock out</button>
+    <div class="tryme">👆 Try clocking out. Good luck.</div>
   </section>
 
-  <section class="party">
+  <section class="party" id="party">
     <svg class="diya" viewBox="0 0 92 92" aria-hidden="true"><path class="flame" d="M46 14c6 9 9 15 9 21a9 9 0 0 1-18 0c0-6 3-12 9-21z" fill="#FFD27A"/><path class="flame" d="M46 24c3 5 4 8 4 11a4 4 0 0 1-8 0c0-3 1-6 4-11z" fill="#FF8A1F"/><path d="M12 52h68c-2 16-16 26-34 26S14 68 12 52z" fill="#E07B00"/><path d="M12 52h68" stroke="#FFD27A" stroke-width="3"/></svg>
     <h2>Ganpati party · Friday 6 PM</h2>
     <p>Date chosen by a fair poll. Poll chosen for deletion by a fair HR.</p>
     <div class="cd" id="cd"></div>
-    <div class="rsvp"><button class="btn btn-gold" id="yesBtn">I'll be there</button><button class="btn" id="noBtn">No</button></div>
+    <div class="rsvp"><button class="btn btn-gold" id="yesBtn">I'll be there</button><button class="btn pulse" id="noBtn">No</button></div>
+    <div class="tryme">👆 Try tapping No</div>
   </section>
 
   <div><h2 class="sec-t">Workbox <small>(Your Actionable)</small></h2></div>
@@ -545,7 +597,9 @@ V.profile=()=>`${sub('My Profile')}
 const B={};
 B.home=()=>{
   $('#plus').onclick=requestSheet;
-  $('#restart').onclick=()=>{try{localStorage.removeItem('vhr-consent');}catch(e){}location.reload();};
+  $('#help').onclick=()=>showTour(false);
+  document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{sfx.tap();QUESTS[+b.dataset.q][4]();});
+  $('#restart').onclick=()=>{try{localStorage.removeItem('vhr-consent');localStorage.removeItem('vhr-q');localStorage.removeItem('vhr-tour');}catch(e){}location.reload();};
   $('#avatar').onclick=()=>push('profile');
   $('#bell').onclick=()=>{openSheet('<h3>Notifications</h3>'+S.notes.map(([t,b])=>`<div class="item" style="display:block"><b>${t}</b><div class="hint">${b}</div></div>`).join(''));S.bell=0;$('#bellN').textContent=0;};
   const pad=n=>String(n).padStart(2,'0');
@@ -570,7 +624,7 @@ B.home=()=>{
     if(tries<2){co.style.transform=`translate(${rnd(-60,60)}px,${rnd(-8,8)}px)`;co.textContent=lines[tries++];return;}
     co.style.transform='';co.textContent='Clock out';tries=0;
     puzzle({title:'Clock-out Puzzle',time:10,desc:'Clocking out is important, so it needs focus. Tap the modaks 1 to 9 in order within <b>10 seconds</b>. If time runs out, <b>3 hours</b> are added to your shift.',
-      fail:()=>{S.extra+=3;notify('Shift extended','+3 hours. Shift now ends '+shiftEnd()+'.');toast('Time up: +3 hours','Your shift now ends at '+shiftEnd()+'.');return `<span class="pill r">+3 hrs</span> Too slow. Shift now ends at <b>${shiftEnd()}</b>.`;},
+      fail:()=>{quest('clock');S.extra+=3;notify('Shift extended','+3 hours. Shift now ends '+shiftEnd()+'.');toast('Time up: +3 hours','Your shift now ends at '+shiftEnd()+'.');return `<span class="pill r">+3 hrs</span> Too slow. Shift now ends at <b>${shiftEnd()}</b>.`;},
       win:()=>{S.stack[S.stack.length-1]='aarti';render();}});
   };
 
@@ -578,7 +632,7 @@ B.home=()=>{
   no.onclick=()=>{ if(n>=nl.length-1){yes.click();return;} n++; no.textContent=nl[n-1];
     no.style.fontSize=Math.max(8,14-n*2)+'px'; no.style.padding=`${Math.max(3,10-n*2)}px ${Math.max(6,16-n*3)}px`;
     yes.style.fontSize=(14+n*3)+'px'; yes.style.padding=`${10+n*3}px ${16+n*5}px`; if(n===nl.length-1) no.textContent='Yes'; };
-  yes.onclick=()=>{petals();sfx.ok();yes.disabled=no.disabled=true;yes.textContent='RSVP confirmed';toast('See you Friday!','You were always going. Now it\'s official.');notify('RSVP received','Attending Friday. Thank you for choosing what was chosen.');};
+  yes.onclick=()=>{petals();quest('rsvp');sfx.ok();yes.disabled=no.disabled=true;yes.textContent='RSVP confirmed';toast('See you Friday!','You were always going. Now it\'s official.');notify('RSVP received','Attending Friday. Thank you for choosing what was chosen.');};
 
   const wb={appr:()=>push('modak'),req:()=>toast('My Requests','0 requests. The previous ones were archived with the poll.'),survey:()=>tab('engage'),
     task:()=>openSheet('<h3>Task(s) · 21</h3>'+['Deliver 21 modaks to the pandal','Ring the aarti bell 108 times','Clap for HR\'s decision','Attend Friday party (voluntary, mandatory)'].map(t=>`<div class="item">${sq('modak')}${t}</div>`).join(''))};
@@ -602,7 +656,7 @@ function vote(c){
   const st=$('#pst');st.hidden=false;
   const say=h=>st.innerHTML=h, dots='<span class="typing"><i></i><i></i><i></i></span>';
   const count=(el,from,to)=>{let n=from;const k=every(()=>{n+=from<to?3:-3;if((from<to&&n>=to)||(from>to&&n<=to)){n=to;clearInterval(k);}el.textContent=n+' ('+Math.round(n/47*100)+'%)';},40);};
-  const finish=()=>later(()=>{S.pollStage='deleted';notify('Decision announced','The party is on Friday, as decided by HR.');render();toast('New announcement','HR has decided: the party is on Friday.');},2400);
+  const finish=()=>later(()=>{S.pollStage='deleted';quest('vote');notify('Decision announced','The party is on Friday, as decided by HR.');render();toast('New announcement','HR has decided: the party is on Friday.');},2400);
   say(dots+' Recording your vote securely…');
   if(c==='Friday'){
     later(()=>{$('#results').hidden=false;requestAnimationFrame(()=>$('#barF').style.width='2%');$('#nF').textContent='1 (2%)';
@@ -647,9 +701,9 @@ B.more=()=>{
       if(j<3){j++;t.style.transform=`translate(${rnd(-110,110)}px,${rnd(-70,0)}px)`;t.textContent=['log out?','catch me','almost'][j-1];return;}
       closeModal();
       puzzle({title:'Visarjan Verification',time:8,desc:'Leaving is a big step. Tap the modaks 1 to 9 in order within <b>8 seconds</b>. If time runs out, 3 hours are added to your shift.',
-        fail:()=>{S.extra+=3;return `<span class="pill r">+3 hrs</span> Logout postponed. Shift now ends at <b>${shiftEnd()}</b>.`;},
+        fail:()=>{quest('logout');S.extra+=3;return `<span class="pill r">+3 hrs</span> Logout postponed. Shift now ends at <b>${shiftEnd()}</b>.`;},
         win:()=>{back();openModal(`<h3>Request submitted</h3><p>Logging out needs approval from <b>Mooshak Raj</b> (Level 7). You'll stay logged in while it's reviewed.</p><button class="btn btn-gold" id="okS">Okay (stay)</button>`);
-          $('#okS').onclick=closeModal;notify('Logout request','Pending with Mooshak Raj. Estimated: after Diwali.');}});
+          $('#okS').onclick=closeModal;quest('logout');notify('Logout request','Pending with Mooshak Raj. Estimated: after Diwali.');}});
     };
   };
 };
@@ -683,7 +737,7 @@ B.leaveForm=()=>{
     out.innerHTML='<div class="status"><span class="typing"><i></i><i></i><i></i></span> Sending to manager…</div>';
     later(()=>{out.innerHTML='<div class="status"><span class="pill">✓ Approved</span> Enjoy Visarjan! Ganpati Bappa Morya!</div>';petals(60);},1300);
     later(()=>{out.innerHTML=`<div class="status"><span class="pill y">Updated</span> Converted to <b>WFP · Work From Pandal</b>. Camera on during aarti. ${days} day${days>1?'s':''} still deducted.</div>`;
-      notify('Leave updated','Converted to Work From Pandal.');toast('Small update','Your leave is now Work From Pandal.');},4200);
+      quest('leave');notify('Leave updated','Converted to Work From Pandal.');toast('Small update','Your leave is now Work From Pandal.');},4200);
   };
 };
 
@@ -716,7 +770,7 @@ function scan(out){
   out.innerHTML=`<div class="scan"><svg viewBox="0 0 70 70"><rect x="3" y="3" width="64" height="64" rx="10" fill="none" stroke="#F6A623" stroke-width="3" stroke-dasharray="10 8"/><circle cx="35" cy="30" r="12" fill="none" stroke="#F6A623" stroke-width="3"/><path d="M15 60c4-10 12-14 20-14s16 4 20 14" fill="none" stroke="#F6A623" stroke-width="3"/></svg><div id="sT"><b>Scanning face…</b></div></div>`;
   later(()=>{$('#sT').innerHTML='<b>Face not recognised.</b><div class="hint" style="margin:2px 0 8px">Please remove trunk and try again.</div><button class="btn btn-ghost" id="rs">Scan again</button>';
     $('#rs').onclick=()=>{$('#sT').innerHTML='<b>Scanning face…</b>';
-      later(()=>{$('#sT').innerHTML='<b>Match: Mooshak Raj (98%)</b><div class="hint">Clock-out credited to Mooshak. You are still clocked in. See you Friday.</div>';notify('Attendance update','Mooshak Raj clocked out. You did not.');toast('Clock-out credited','To Mooshak Raj. Better luck tomorrow.');},1800);};
+      later(()=>{$('#sT').innerHTML='<b>Match: Mooshak Raj (98%)</b><div class="hint">Clock-out credited to Mooshak. You are still clocked in. See you Friday.</div>';quest('clock');notify('Attendance update','Mooshak Raj clocked out. You did not.');toast('Clock-out credited','To Mooshak Raj. Better luck tomorrow.');},1800);};
   },2000);
 }
 
@@ -740,7 +794,7 @@ B.modak=()=>{
     later(()=>ch.innerHTML=s1+s2+step('stuck','…','Mooshak Raj','Reviewing the modaks personally…'),2500);
     later(()=>{ch.innerHTML=s1+s2+step('fail','!','Mooshak Raj','Evidence consumed by approver. Approved, with adjustments.')+
       `<div class="receipt"><div><span>Claimed</span><span>₹${a.toFixed(2)}</span></div><div><span>Quality check (2 modaks)</span><span>−₹${(a/q*2).toFixed(2)}</span></div><div><span>Festival tax</span><span>−₹${(a*.5).toFixed(2)}</span></div><div><span>Mooshak fee</span><span>−everything else</span></div><div class="tot"><span>Disbursed</span><span>₹0.00</span></div></div>`;
-      notify('Claim settled',id+': ₹0.00 credited.');toast('Claim approved','₹0.00 will reach you in 7–10 working years.');},4800);
+      quest('modak');notify('Claim settled',id+': ₹0.00 credited.');toast('Claim approved','₹0.00 will reach you in 7–10 working years.');},4800);
   }
 };
 
@@ -756,7 +810,7 @@ B.griev=()=>{
     let h=raw.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),n=0;
     R.forEach(([re,rep])=>h=h.replace(re,m=>{n++;return `<del>${m}</del> <ins>${rep}</ins>`;}));
     $('#gOut').innerHTML=`<p class="cap">HR Sentiment Engine™ made ${n} improvement${n===1?'':'s'}</p><div class="rewrite">${h}</div><div class="status"><span class="pill">✓ Resolved</span> Forwarded to: <b>you</b>. Closed as "Employee is happy".</div>`;
-    S.gtext=null;notify('Grievance resolved','Thank you for the kind words about HR!');toast('Grievance resolved','Thank you for the lovely feedback about HR.');
+    S.gtext=null;quest('griev');notify('Grievance resolved','Thank you for the kind words about HR!');toast('Grievance resolved','Thank you for the lovely feedback about HR.');
   };
 };
 
@@ -780,7 +834,7 @@ B.profile=()=>{
     let h='',ok=true;for(let i=0;i<RU.length;i++){const k=RU[i][1](s);h+=`<div class="rule ${k?'ok':'no'}"><b>Rule ${i+1}</b><span>${RU[i][0]}</span></div>`;if(!k){ok=false;break;}}
     box.innerHTML=h;
     if(ok){lock=true;box.insertAdjacentHTML('beforeend','<div class="status"><span class="pill">✓ Strong</span> Too strong, actually.</div>');
-      later(()=>{pc.value='Friday123';box.innerHTML='<div class="status"><span class="pill y">Reset by HR</span> Your passcode is now <b>Friday123</b>. Same for everyone.</div>';lock=false;},2200);}
+      later(()=>{pc.value='Friday123';quest('pass');box.innerHTML='<div class="status"><span class="pill y">Reset by HR</span> Your passcode is now <b>Friday123</b>. Same for everyone.</div>';lock=false;},2200);}
   };
 };
 
@@ -793,6 +847,7 @@ function render(){
   $('#tabs').hidden=!!S.stack.length;
   $('#fback').hidden=!(S.stack.length||S.tab!=='home');$('#fback').style.bottom=S.stack.length?'':'calc(80px + env(safe-area-inset-bottom,0px))';
   document.querySelectorAll('[data-tab]').forEach(b=>b.dataset.tab===S.tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
+  const et=document.querySelector('[data-tab=engage]');if(et){const d=et.querySelector('.tdot');if(!QD.vote&&!d)et.insertAdjacentHTML('beforeend','<span class="tdot"></span>');if(QD.vote&&d)d.remove();}
   window.scrollTo(0,0);
 }
 function push(v){S.stack.push(v);try{history.pushState({v},'');}catch(e){}render();}
@@ -807,7 +862,7 @@ $('#fback').onclick=back;
 render();
 
 /* first-run consent sheet */
-(function(){let seen=false;try{seen=localStorage.getItem('vhr-consent')==='1';}catch(e){}
+function showConsent(){let seen=false;try{seen=localStorage.getItem('vhr-consent')==='1';}catch(e){}
   if(seen)return;
   const done=m=>{closeSheet();toast('Preferences saved',m);try{localStorage.setItem('vhr-consent','1');}catch(e){}};
   openSheet(`<h3>We use modaks</h3><p id="cT">VighnaHR uses modaks to remember you, track your festive participation and send you polls we'll delete later.</p>
@@ -817,7 +872,27 @@ render();
     <div class="row" style="margin-top:12px"><button class="btn btn-gold" id="cA">Accept all modaks</button><button class="btn btn-ghost" id="cM">Manage</button></div>`);
   $('#cA').onclick=()=>done('All modaks accepted.');
   $('#cM').onclick=()=>{if($('#cP').hidden){$('#cP').hidden=false;$('#cM').textContent='Save my choices';}else done('Your choices were saved: all of them.');};
-})();
+}
+
+/* ---------- quick tour ---------- */
+const TOUR=[
+  ['🪔','Welcome to VighnaHR','An HR app where everything works. Just not for you. A Ganesh Chaturthi special.'],
+  ['🎯','Complete Festive Quests','Home has 8 quests. Tap any quest to jump straight to the fun bit. Finish all 8 to become an HR Certified Survivor.'],
+  ['👆','Poke everything','Buttons dodge, polls get "corrected", timers are tight. Look for the glowing buttons. Failing is half the fun, so tap Try again.'],
+  ['↩️','You are never stuck','Use ← Back, ✕ or your phone’s back gesture. ↻ restarts everything and ? replays this tour. 🔊 mutes sounds.']
+];
+function showTour(first){
+  let i=0;const el=document.createElement('div');el.className='tour';document.body.appendChild(el);
+  const draw=()=>{const t=TOUR[i];el.innerHTML=`<div class="tcard"><div class="big">${t[0]}</div><h2>${t[1]}</h2><p>${t[2]}</p>
+    <div class="tdots">${TOUR.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+    <div class="row" style="justify-content:center"><button class="btn btn-ghost" id="tSkip">${i?'Back':'Skip'}</button><button class="btn btn-gold" id="tNext">${i===TOUR.length-1?"Let's go!":'Next'}</button></div></div>`;
+    $('#tNext').onclick=()=>{sfx.tap();if(i<TOUR.length-1){i++;draw();}else done();};
+    $('#tSkip').onclick=()=>{sfx.tap();if(i){i--;draw();}else done();};};
+  const done=()=>{el.remove();try{localStorage.setItem('vhr-tour','1');}catch(e){}if(first)showConsent();};
+  draw();
+}
+let toured=false;try{toured=localStorage.getItem('vhr-tour')==='1';}catch(e){}
+if(toured)showConsent();else showTour(true);
 </script>
 </body>
 </html>
