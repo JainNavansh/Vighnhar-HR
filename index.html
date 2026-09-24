@@ -566,7 +566,7 @@ V.leaveForm=()=>`${sub('Apply Leave')}
   <form class="stack" id="leaveForm">
     <div class="field"><label for="ld">Start date</label><input id="ld" type="date" value="2026-09-25"></div>
     <div class="field"><span class="flabel">Number of days · aim for them</span>
-      <div class="arena" id="arena"><button type="button" class="tgt" id="tgt" aria-label="Target"><svg viewBox="0 0 48 48"><path d="M24 4c-4 6-14 14-14 26a14 14 0 0 0 28 0C38 18 28 10 24 4z" fill="#F6A623"/><path d="M24 8v34M17 18c1 8 3 16 7 24M31 18c-1 8-3 16-7 24" stroke="#B96A00" stroke-width="2" fill="none"/></svg></button><div class="amsg" id="amsg">Tap Start, then hit the moving modak. Each hit = 1 day. Each miss costs 1 day. Over 4 days resets to 0.</div></div>
+      <div class="arena" id="arena"><button type="button" class="tgt" id="tgt" aria-label="Target"><svg viewBox="0 0 48 48"><path d="M24 4c-4 6-14 14-14 26a14 14 0 0 0 28 0C38 18 28 10 24 4z" fill="#F6A623"/><path d="M24 8v34M17 18c1 8 3 16 7 24M31 18c-1 8-3 16-7 24" stroke="#B96A00" stroke-width="2" fill="none"/></svg></button><div class="amsg" id="amsg">Tap Start, then hit the moving modak. Each hit = 1 day. Each miss costs 1 day, and yes, leave can go negative. Over 4 days resets to 0.</div></div>
       <div class="row"><b id="daysVal" style="font-size:26px">0</b><span class="muted">days</span><div style="flex:1"></div><span class="hint" id="aimT"></span><button class="btn btn-gold" type="button" id="aimStart">Start (8 s)</button></div></div>
     <div class="field"><label for="lr">Reason</label><textarea id="lr">Going for Ganpati Visarjan with family.</textarea></div>
     <button class="btn btn-gold btn-block" type="submit">Apply</button>
@@ -762,15 +762,18 @@ B.leaveForm=()=>{
   const pop=(txt,px,py,col)=>{const e=document.createElement('div');e.className='pop';e.textContent=txt;e.style.left=px+'px';e.style.top=py+'px';e.style.color=col;ar.appendChild(e);setTimeout(()=>e.remove(),700);};
   const loop=()=>{if(!live)return;const W=ar.clientWidth-46,H=ar.clientHeight-46;x+=vx;y+=vy;if(x<0||x>W){vx*=-1;x=Math.max(0,Math.min(W,x));}if(y<0||y>H){vy*=-1;y=Math.max(0,Math.min(H,y));}
     if(Math.random()<.02){vx+=rnd(-1.5,1.5);vy+=rnd(-1.5,1.5);}tg.style.transform=`translate(${x}px,${y}px)`;S.raf=requestAnimationFrame(loop);};
-  tg.onclick=e=>{e.stopPropagation();if(!live)return;d++;sfx.tap();pop('+1 day',x,y,'#6BE39A');vx*=1.25;vy*=1.25;
+  tg.onclick=e=>{e.stopPropagation();if(!live)return;d++;v.style.color=d<0?'#FF6B6B':'';sfx.tap();pop('+1 day',x,y,'#6BE39A');vx*=1.25;vy*=1.25;
     if(d>4){d=0;sfx.bad();pop('TOO GREEDY',x,y,'#FF8A8D');toast('Reset to 0','More than 4 days needs CEO approval.');}v.textContent=d;};
-  ar.onclick=e=>{if(!live)return;const r=ar.getBoundingClientRect();d=Math.max(0,d-1);v.textContent=d;pop('−1 missed',e.clientX-r.left,e.clientY-r.top,'#FF8A8D');};
+  ar.onclick=e=>{if(!live)return;const r=ar.getBoundingClientRect();d=d-1;v.textContent=d;v.style.color=d<0?'#FF6B6B':'';if(d<0)sfx.bad();pop('−1 missed',e.clientX-r.left,e.clientY-r.top,'#FF8A8D');};
   $('#aimStart').onclick=()=>{d=0;v.textContent=0;x=20;y=20;vx=2.6;vy=2.1;live=true;ar.classList.add('live');msg.textContent='';$('#aimStart').disabled=true;loop();
     const t0=performance.now();const k=every(()=>{const left=8-(performance.now()-t0)/1000;$('#aimT').textContent=Math.max(0,left).toFixed(1)+' s';
       if(left<=0){clearInterval(k);live=false;ar.classList.remove('live');$('#aimStart').disabled=false;$('#aimStart').textContent='Try again';
-        msg.textContent=d?`Round over: ${d} day${d>1?'s':''} earned. Tap Apply, or try again.`:'Round over: 0 days. Leave is earned, not given.';}},100);};
+        msg.textContent=d>0?`Round over: ${d} day${d>1?'s':''} earned. Tap Apply, or try again.`:d<0?`Round over: ${d} days. You now OWE HR ${-d} day${d<-1?'s':''}. Tap Apply to settle up.`:'Round over: 0 days. Leave is earned, not given.';}},100);};
   $('#leaveForm').onsubmit=e=>{e.preventDefault();
     if(live)return toast('Still aiming','Finish the round first.');
+    if(d<0){const owe=-d,hrs=owe*3;S.extra+=hrs;quest('leave');sfx.bad();
+      $('#leaveOut').innerHTML=`<div class="status"><span class="pill r">Negative leave</span> Balance ${d} days. You owe HR <b>${owe} day${owe>1?'s':''}</b>: <b>+${hrs} hours</b> added to your shift (now ends ${shiftEnd()}) and <b>${owe} Saturday${owe>1?'s':''}</b> of pandal duty. Thank you for your contribution!</div>`;
+      notify('Negative leave',`You owe ${owe} day${owe>1?'s':''}. +${hrs} hrs added to your shift.`);toast('Leave went negative',`+${hrs} hours of work. HR thanks you for your generosity.`);return;}
     if(d<1)return toast('0 days earned','Hit the modak to earn at least 1 day.');const out=$('#leaveOut'),days=d;
     out.innerHTML='<div class="status"><span class="typing"><i></i><i></i><i></i></span> Sending to manager…</div>';
     later(()=>{out.innerHTML='<div class="status"><span class="pill">✓ Approved</span> Enjoy Visarjan! Ganpati Bappa Morya!</div>';petals(60);},1300);
